@@ -4087,6 +4087,36 @@ document.getElementById("file").addEventListener("change", (e) => handleFile(e.t
 ["dragleave","drop"].forEach(t => addEventListener(t, e => { e.preventDefault(); document.body.classList.remove("dragging"); }));
 addEventListener("drop", e => handleFile(e.dataTransfer.files[0]));
 
+// โหลดโมเดลอัตโนมัติเมื่อเปิดจาก Web Server / GitHub Pages
+// ถ้าเปิด index.html แบบ file:// ยังสามารถลากหรือเลือกไฟล์เองได้เหมือนเดิม
+async function autoLoadDefaultModel() {
+  const modelUrl = "./npc470g_cell.glb";
+  const modeEl = document.getElementById("machineMode");
+  const dropEl = document.querySelector("#drop div");
+
+  try {
+    if (modeEl) modeEl.textContent = "● LOADING MODEL";
+    if (dropEl) dropEl.textContent = "กำลังโหลด npc470g_cell.glb …";
+    log("กำลังโหลด npc470g_cell.glb อัตโนมัติ …");
+
+    const response = await fetch(modelUrl, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    loadFromArrayBuffer(buffer, "npc470g_cell.glb");
+  } catch (err) {
+    console.warn("Auto-load npc470g_cell.glb failed:", err);
+    if (modeEl) modeEl.textContent = "● WAITING MODEL";
+    if (dropEl) dropEl.textContent = "ลากไฟล์ npc470g_cell.glb มาวางที่นี่";
+    log("โหลดอัตโนมัติไม่ได้ — ยังสามารถลากไฟล์หรือกดเลือกไฟล์ได้\n" +
+        (err && err.message ? err.message : err));
+  }
+}
+
+autoLoadDefaultModel();
+
 // ===============================================================
 // ขยับข้อต่อ
 // ===============================================================
@@ -4589,7 +4619,7 @@ addEventListener("resize", () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-log("ลากไฟล์ npc470g_cell.glb มาวางบนหน้านี้ หรือกดปุ่มเลือกไฟล์");
+log("ระบบจะลองโหลด npc470g_cell.glb อัตโนมัติ · หากไม่สำเร็จให้ลากไฟล์หรือกดเลือกไฟล์");
 
 // debug hook (ใช้ตรวจสอบภายในจากคอนโซล)
 window.__twin = { angles, HOME_DEG, SEQ, WP, get joints(){return joints;}, get gripPoint(){return gripPoint;},
